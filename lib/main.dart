@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'quiz_brain.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
+
+QuizBrain quizBrain = QuizBrain();
 
 void main() => runApp(Quizzler());
 
@@ -7,7 +11,7 @@ class Quizzler extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        backgroundColor: Colors.grey.shade900,
+        backgroundColor: Colors.black,
         body: SafeArea(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 10.0),
@@ -25,6 +29,56 @@ class QuizPage extends StatefulWidget {
 }
 
 class _QuizPageState extends State<QuizPage> {
+  List<Icon> scoreKeeper = [];
+
+  void checkAnswer(bool userPickedAnswer) {
+    bool correctAnswer = quizBrain.getCorrectAnswer();
+
+    setState(() {
+      if (quizBrain.isFinished() == false) {
+        if (userPickedAnswer == correctAnswer) {
+          scoreKeeper.add(
+            Icon(Icons.check, color: Colors.lightGreenAccent),
+          );
+        } else {
+          scoreKeeper.add(
+            Icon(Icons.close, color: Colors.red),
+          );
+        }
+
+        quizBrain.nextQuestion();
+      } else {
+        Alert(
+          type: AlertType.success,
+          context: context,
+          buttons: [
+            DialogButton(
+                child: Text(
+                  'Reiniciar',
+                  style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold),
+                ),
+                onPressed: () => Navigator.pop(context))
+          ],
+          title: 'FIM',
+          style: AlertStyle(
+            alertBorder: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(0.0),
+              side: BorderSide(color: Colors.black),
+            ),
+            animationType: AnimationType.fromBottom,
+            titleStyle: TextStyle(
+                fontStyle: FontStyle.italic, fontWeight: FontWeight.bold),
+          ),
+        ).show();
+        quizBrain.reset();
+        scoreKeeper.clear();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -37,7 +91,7 @@ class _QuizPageState extends State<QuizPage> {
             padding: EdgeInsets.all(10.0),
             child: Center(
               child: Text(
-                'This is where the question text will go.',
+                quizBrain.getQuestionText(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 25.0,
@@ -47,12 +101,17 @@ class _QuizPageState extends State<QuizPage> {
             ),
           ),
         ),
+        /*question*/
         Expanded(
           child: Padding(
             padding: EdgeInsets.all(15.0),
             child: FlatButton(
               textColor: Colors.white,
               color: Colors.green,
+              splashColor: Colors.red,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: Text(
                 'True',
                 style: TextStyle(
@@ -62,15 +121,21 @@ class _QuizPageState extends State<QuizPage> {
               ),
               onPressed: () {
                 //The user picked true.
+                checkAnswer(true);
               },
             ),
           ),
         ),
+        /*true*/
         Expanded(
           child: Padding(
             padding: EdgeInsets.all(15.0),
             child: FlatButton(
               color: Colors.red,
+              splashColor: Colors.green,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: Text(
                 'False',
                 style: TextStyle(
@@ -80,18 +145,17 @@ class _QuizPageState extends State<QuizPage> {
               ),
               onPressed: () {
                 //The user picked false.
+
+                checkAnswer(false);
               },
             ),
           ),
         ),
-        //TODO: Add a Row here as your score keeper
+        /*false*/
+        Row(
+          children: scoreKeeper,
+        )
       ],
     );
   }
 }
-
-/*
-question1: 'You can lead a cow down stairs but not up stairs.', false,
-question2: 'Approximately one quarter of human bones are in the feet.', true,
-question3: 'A slug\'s blood is green.', true,
-*/
